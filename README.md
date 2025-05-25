@@ -85,16 +85,16 @@ chmod 640 click2call.php
 
 Test the script via browser or API tools like Postman or curl.
 
-🔁 Additional Dialplan Hooks
+### 🔁 Additional Dialplan Hooks
 
-📋 [macro-dialout-trunk-predial-hook]
+### 📋 [macro-dialout-trunk-predial-hook]
 Used to log the hangup cause into the CDR record for analysis and reporting (e.g., via Grafana or Asternic).
 
 Automatically stores ${HANGUPCAUSE} in the CDR field hangupcause
 
 Hooked into outbound trunk logic via FreePBX
 
-📋 [set-static-callerid]
+### 📋 [set-static-callerid]
 Handles Click2Call calls by setting consistent SIP headers and recording the call:
 
 Ensures that a valid CallerID is set
