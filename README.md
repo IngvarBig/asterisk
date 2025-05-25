@@ -72,7 +72,7 @@ GET /click2call.php?leg_a=1001&leg_b=00442012345678&route_number=gateway1
    - `EXT_START`, `EXT_END`
    - `+XX`, `GSM_TRUNK`, `TDM_TRUNK`
 3. Reload the dialplan:
-```bash
+
 asterisk -rx "dialplan reload"
 
 🌐 Click2Call Script
@@ -80,21 +80,22 @@ Copy click2call.php to your web server (e.g., /var/www/html/)
 
 Set correct ownership and permissions:
 
+```bash
 chown www-data:www-data click2call.php
 chmod 640 click2call.php
+```
 
 Test the script via browser or API tools like Postman or curl.
 
-### 🔁 Additional Dialplan Hooks
-
-### 📋 [macro-dialout-trunk-predial-hook]
+🔁 Additional Dialplan Hooks
+📋 [macro-dialout-trunk-predial-hook]
 Used to log the hangup cause into the CDR record for analysis and reporting (e.g., via Grafana or Asternic).
 
 Automatically stores ${HANGUPCAUSE} in the CDR field hangupcause
 
 Hooked into outbound trunk logic via FreePBX
 
-### 📋 [set-static-callerid]
+📋 [set-static-callerid]
 Handles Click2Call calls by setting consistent SIP headers and recording the call:
 
 Ensures that a valid CallerID is set
