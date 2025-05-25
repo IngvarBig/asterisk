@@ -84,3 +84,27 @@ chown www-data:www-data click2call.php
 chmod 640 click2call.php
 
 Test the script via browser or API tools like Postman or curl.
+
+🔁 Additional Dialplan Hooks
+
+📋 [macro-dialout-trunk-predial-hook]
+Used to log the hangup cause into the CDR record for analysis and reporting (e.g., via Grafana or Asternic).
+
+Automatically stores ${HANGUPCAUSE} in the CDR field hangupcause
+
+Hooked into outbound trunk logic via FreePBX
+
+📋 [set-static-callerid]
+Handles Click2Call calls by setting consistent SIP headers and recording the call:
+
+Ensures that a valid CallerID is set
+
+Removes conflicting SIP headers (From, PAI, RPID)
+
+Adds new standardized headers for SIP identity
+
+Records call audio to a dated .wav file
+
+Captures QoS (RTP statistics) and hangup cause at the end of the call into the CDR
+
+📌 This context should be used as the Context in your Originate AMI action (see click2call.php).
