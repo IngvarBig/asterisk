@@ -64,3 +64,18 @@ If a call does not meet routing criteria (e.g., invalid format for TDM), it's lo
 
 [invalid]
   → Logs the attempt and ends the call
+
+| Parameter        | Description                                               |
+| ---------------- | --------------------------------------------------------- |
+| `EXT_START/END`  | Extension range allowed to use the dialplan               |
+| `+XX`, `X`       | Adjust to your local numbering plan                       |
+| `GSM_TRUNK`      | Name of the default SIP or PJSIP trunk                    |
+| `TDM_TRUNK`      | Name of the alternate fallback trunk                      |
+| `% 25`           | Defines how often to switch to TDM (e.g. every 25th call) |
+| `callcounter` DB | Asterisk internal DB key used to store the counter        |
+
+📌 Note
+This dialplan is intended as a flexible base template. Adapt the logic to your own telecom environment and regulatory dialing format.
+
+🧑‍💻 Author
+Made with Ingvar by a VoIP infrastructure engineer optimizing SIP routing and automation.
