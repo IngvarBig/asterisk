@@ -1,81 +1,111 @@
-# 📞 Asterisk Dialplan: Smart Outbound Routing Example
+# 📞 Asterisk Dialplan & Click2Call Script
 
-This repository contains a universal example of a custom Asterisk dialplan that implements dynamic outbound call routing based on:
+This repository contains two key components for managing VoIP call routing and triggering outbound calls:
 
-- **Extension range authorization**
-- **Number normalization**
-- **Mobile number detection**
-- **Call counter logic**
-- **Routing between GSM and TDM trunks**
-- **Call recording**
-- **Invalid number handling and logging**
+1. **Universal Asterisk Dialplan (`dialplan-example.conf`)**
+2. **Secure PHP-based Click2Call Script (`click2call.php`)**
 
 ---
 
-## 🛠 Features
+## 📂 Files
 
-### ✅ Extension Range Check
-Only allows outbound calls from internal extensions within a specific range.  
-Customize it by changing the values of `EXT_START` and `EXT_END`.
-
-### 🔢 Number Normalization
-Cleans up outbound numbers, including:
-- Removing `+` signs
-- Adjusting to a local/national format (customize as needed)
-
-### 📱 Mobile Number Detection
-Flags numbers as mobile if they start with configurable prefixes, e.g., `79`, `89`, etc.
-
-### 🔄 Call Counter Logic
-Keeps track of how many mobile calls have been made. Every Nth call (e.g., every 25th) is routed through an alternate trunk (e.g., TDM), while others go through the default (e.g., GSM).
-
-### 🔀 Trunk Routing
-Dynamically decides which trunk to use (`TDM_TRUNK` or `GSM_TRUNK`) based on logic.
-
-### 🎧 Call Recording
-Each call is recorded with a unique filename structure:  
-`out-DST-CALLERID-TIMESTAMP.wav`
-
-### 🚫 Invalid Call Handling
-If a call does not meet routing criteria (e.g., invalid format for TDM), it's logged and dropped.
+| File                  | Description                                                  |
+|------------------------|--------------------------------------------------------------|
+| `dialplan-example.conf` | A customizable Asterisk dialplan for dynamic outbound routing |
+| `click2call.php`         | PHP script to initiate calls via Asterisk AMI                 |
 
 ---
 
-## 🧩 Structure Overview
+## 🛠 Features Overview
 
-```asterisk
-[from-internal-custom]
-  → Checks if caller is authorized to route
+### 📟 Dialplan Highlights
 
-[custom-routing]
-  → Normalizes number
-  → Detects mobile numbers
-  → Increments call counter
-  → Chooses route based on counter
-  → Jumps to [tdm], [gsm] or [invalid]
+- **Extension Range Filtering** — Only specific extensions can use the dialplan
+- **Number Normalization** — Strips `+`/`00`, adapts to local format
+- **Mobile Prefix Detection** — Flags calls to mobile numbers
+- **Call Counter** — Balances calls between trunks (e.g. every 25th call)
+- **Trunk Switching** — Routes between `GSM` and `TDM` trunks
+- **Recording** — Auto-records calls with dynamic filenames
+- **Invalid Number Handling** — Drops and logs invalid call attempts
 
-[tdm]
-  → Validates and routes through TDM trunk
-  → Records the call
+📌 Fully adaptable: just replace placeholders like `EXT_START`, `EXT_END`, `+XX`, `GSM_TRUNK`, `TDM_TRUNK` with your own values.
 
-[gsm]
-  → Routes through GSM trunk
-  → Records the call
+---
 
-[invalid]
-  → Logs the attempt and ends the call
+### 🖥️ Click2Call Script (`click2call.php`)
 
-| Parameter        | Description                                               |
-| ---------------- | --------------------------------------------------------- |
-| `EXT_START/END`  | Extension range allowed to use the dialplan               |
-| `+XX`, `X`       | Adjust to your local numbering plan                       |
-| `GSM_TRUNK`      | Name of the default SIP or PJSIP trunk                    |
-| `TDM_TRUNK`      | Name of the alternate fallback trunk                      |
-| `% 25`           | Defines how often to switch to TDM (e.g. every 25th call) |
-| `callcounter` DB | Asterisk internal DB key used to store the counter        |
+This script allows triggering a call between two parties from a web interface or API:
 
-📌 Note
-This dialplan is intended as a flexible base template. Adapt the logic to your own telecom environment and regulatory dialing format.
+- ✅ Connects to Asterisk via **AMI**
+- ✅ Accepts `leg_a` (internal) and `leg_b` (external) via GET parameters
+- ✅ Normalizes `leg_b` by stripping `00` or `+`
+- ✅ Validates both numbers
+- ✅ Authenticates with AMI and sends `Originate` action
+- ✅ Logs the entire action to a file
 
-🧑‍💻 Author
-Made with Ingvar by a VoIP infrastructure engineer optimizing SIP routing and automation.
+Example request:
+GET /click2call.php?leg_a=1001&leg_b=00442012345678&route_number=gateway1
+
+
+🧱 Requires:
+- Asterisk with enabled AMI
+- PJSIP/SIP extension configured
+- Web server with PHP support (Apache, Nginx+PHP-FPM)
+
+---
+
+## 🔐 Security Recommendations
+
+- Move AMI credentials to a separate `.env` or `config.php`
+- Use HTTPS and IP whitelisting (`$allowed_ips`) for the script
+- Ensure correct file and directory permissions on log paths
+- Rotate logs periodically (`logrotate` for `/var/log/click2call.log`)
+
+---
+
+## 🧩 Usage
+
+### ☎️ Asterisk Dialplan
+
+1. Place `dialplan-example.conf` into `/etc/asterisk/extensions_custom.conf` or similar.
+2. Replace all placeholders like:
+   - `EXT_START`, `EXT_END`
+   - `+XX`, `GSM_TRUNK`, `TDM_TRUNK`
+3. Reload the dialplan:
+
+asterisk -rx "dialplan reload"
+
+🌐 Click2Call Script
+Copy click2call.php to your web server (e.g., /var/www/html/)
+
+Set correct ownership and permissions:
+
+```bash
+chown www-data:www-data click2call.php
+chmod 640 click2call.php
+```
+
+Test the script via browser or API tools like Postman or curl.
+
+🔁 Additional Dialplan Hooks
+📋 [macro-dialout-trunk-predial-hook]
+Used to log the hangup cause into the CDR record for analysis and reporting (e.g., via Grafana or Asternic).
+
+Automatically stores ${HANGUPCAUSE} in the CDR field hangupcause
+
+Hooked into outbound trunk logic via FreePBX
+
+📋 [set-static-callerid]
+Handles Click2Call calls by setting consistent SIP headers and recording the call:
+
+Ensures that a valid CallerID is set
+
+Removes conflicting SIP headers (From, PAI, RPID)
+
+Adds new standardized headers for SIP identity
+
+Records call audio to a dated .wav file
+
+Captures QoS (RTP statistics) and hangup cause at the end of the call into the CDR
+
+📌 This context should be used as the Context in your Originate AMI action (see click2call.php).
